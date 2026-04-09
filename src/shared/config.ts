@@ -24,7 +24,7 @@ export const DEFAULT_CONFIG: VibegpsConfig = {
   report: {
     defaultFormat: "html",
     alsoEmitMarkdown: true,
-    analyzer: "codex",
+    analyzer: "auto",
     autoGenerate: true,
     maxContextFiles: 6,
     maxPatchCharsPerFile: 1800

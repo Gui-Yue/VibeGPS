@@ -16,6 +16,62 @@ export type ReviewPriority = "high" | "medium" | "low";
 
 export type DesignAlignmentStatus = "aligned" | "partial" | "unclear" | "deviated";
 
+export type DiagramTone = "add" | "mod" | "del" | "keep";
+
+export interface StructureDiagramNode {
+  id: string;
+  title: string;
+  body: string;
+  x: number;
+  y: number;
+  tone: DiagramTone;
+}
+
+export interface StructureDiagramSide {
+  title: string;
+  nodes: StructureDiagramNode[];
+  edges: [string, string][];
+}
+
+export interface DiagramLegendItem {
+  label: string;
+  tone: DiagramTone;
+}
+
+export interface StructureDiagram {
+  title: string;
+  summary: string;
+  contentTitle: string;
+  content: string;
+  reasonTitle: string;
+  reason: string;
+  legend: DiagramLegendItem[];
+  before: StructureDiagramSide;
+  after: StructureDiagramSide;
+}
+
+export interface RuntimeDiagramStep {
+  label: string;
+  tone: DiagramTone;
+}
+
+export interface RuntimeDiagramSide {
+  title: string;
+  steps: RuntimeDiagramStep[];
+}
+
+export interface RuntimeDiagram {
+  title: string;
+  summary: string;
+  contentTitle: string;
+  content: string;
+  reasonTitle: string;
+  reason: string;
+  legend: DiagramLegendItem[];
+  before: RuntimeDiagramSide;
+  after: RuntimeDiagramSide;
+}
+
 export interface VibegpsConfig {
   version: 1;
   thresholds: {
@@ -25,7 +81,7 @@ export interface VibegpsConfig {
   report: {
     defaultFormat: "html" | "md";
     alsoEmitMarkdown: boolean;
-    analyzer: "codex" | "heuristic";
+    analyzer: "codex" | "claude" | "auto" | "heuristic";
     autoGenerate: boolean;
     maxContextFiles: number;
     maxPatchCharsPerFile: number;
@@ -175,6 +231,8 @@ export interface ReportAnalysis {
   nextQuestions: string[];
   confidence: AnalysisConfidence;
   analyzerRuntime: "codex" | "heuristic";
+  structureDiagrams: StructureDiagram[];
+  runtimeDiagrams: RuntimeDiagram[];
 }
 
 export interface ProjectDigestModule {

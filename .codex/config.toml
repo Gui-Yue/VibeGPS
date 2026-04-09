@@ -1,0 +1,3 @@
+# vibegps:start
+notify = ["node", "C:/Users/17294/Desktop/workfile/hackthon/VibeGPS/.vibegps/hooks/codex-turn-end.js"]
+# vibegps:end

@@ -1,0 +1,29 @@
+﻿{
+  "name": "vibegps",
+  "version": "0.1.0",
+  "description": "GPS for vibe coders with coding agents such as Codex.",
+  "license": "MIT",
+  "main": "dist/bin.js",
+  "types": "dist/bin.d.ts",
+  "bin": {
+    "vibegps": "dist/bin.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "if exist dist rmdir /s /q dist",
+    "test": "vitest run --pool=vmThreads tests"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.4.1",
+    "commander": "^14.0.1",
+    "diff": "^8.0.2",
+    "fast-glob": "^3.3.3",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.7.2",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

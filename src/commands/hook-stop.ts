@@ -7,8 +7,6 @@ export function registerHookStopCommand(program: Command): void {
     .description("Internal Codex Stop hook entrypoint")
     .action(async () => {
       const output = await runStopHook(process.cwd());
-      if (output.systemMessage) {
-        process.stdout.write(JSON.stringify(output));
-      }
+      process.stdout.write(JSON.stringify(output));
     });
 }

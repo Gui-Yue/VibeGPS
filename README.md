@@ -2,16 +2,17 @@
 
 VibeGPS 是一个面向 vibecoding 的 CLI 追踪器。
 
-它不会替代 `codex`，而是接在 `codex` 后面，持续记录项目在每一轮 AI 开发之后到底发生了什么变化，并在变化累计到值得 review 时生成高可视化报告。
+它不会替代 AI 编码工具，而是接在 `codex` 或 `claude` 后面，持续记录项目在每一轮 AI 开发之后到底发生了什么变化，并在变化累计到值得 review 时生成高可视化报告。
 
 一句话理解：
 
-> `codex` 负责写，`vibegps` 负责记、负责解释、负责帮你重新获得掌控感。
+> AI 负责写，`vibegps` 负责记、负责解释、负责帮你重新获得掌控感。
 
 ## 当前 MVP 能做什么
 
 - 一次 `init` 接入当前项目
-- 接管 Codex Stop hook
+- 同时接管 Codex Stop hook 和 Claude Code Stop hook
+- 自动检测可用的 AI agent（Codex / Claude），择优使用
 - 按 Git branch 维护独立追踪链
 - 新 branch 首次 diff 自动建立 branch baseline
 - 每轮生成 `checkpoint + delta`
@@ -67,13 +68,14 @@ codex
 2. 写入项目级配置 `.vibegps/config.json`
 3. 生成初始 checkpoint
 4. 给当前 Git branch 创建 `BranchTrack`
-5. 接入 `.codex/config.toml` + `.codex/hooks.json` 的 Codex Stop hook
-6. 生成一个基础 `ProjectDigest`
-7. 把当前项目写入全局索引 `~/.vibegps/projects.json`
+5. 接入 Codex Stop hook（`.codex/config.toml` + `.codex/hooks.json`）
+6. 接入 Claude Code Stop hook（`.claude/settings.json`）
+7. 生成一个基础 `ProjectDigest`
+8. 把当前项目写入全局索引 `~/.vibegps/projects.json`
 
-之后你继续正常使用 `codex` 或 `codex resume` 即可。
+之后你继续正常使用 `codex` / `claude` 即可。
 
-每次 Codex 一轮完成后，VibeGPS 会自动：
+每次 AI agent 一轮完成后，VibeGPS 会自动：
 
 1. 读取当前 branch
 2. 找到该 branch 对应的追踪链
@@ -85,7 +87,7 @@ codex
 
 ### `vibegps init`
 
-初始化当前项目，并接入 Codex Stop hook。
+初始化当前项目，并接入 Codex / Claude Code Stop hook。
 
 ```bash
 vibegps init
@@ -162,13 +164,13 @@ vibegps doctor
 会检查：
 
 - `git` 是否可用
-- `codex` 是否可用
+- `codex` / `claude` 是否可用
 - 当前目录是否是 git repo
 - `.vibegps/` 是否存在
 - `.vibegps/config.json` 是否可解析
 - `.vibegps/state.db` 是否可读
-- `.codex/config.toml` 是否启用 `codex_hooks`
-- `.codex/config.toml` / `.codex/hooks.json` 是否存在受管 Stop hook 配置
+- Codex hook 配置（`.codex/config.toml` / `.codex/hooks.json`）
+- Claude Code hook 配置（`.claude/settings.json`）
 - `ProjectDigest` 是否可用
 
 ## 目录结构
@@ -244,7 +246,9 @@ VibeGPS 把信息分成两层：
 ```bash
 cd your-project
 vibegps init
-codex
+# 然后使用你习惯的 AI 编码工具
+codex        # 或
+claude       # 都可以
 ```
 
 ### 场景 2：看当前项目是否正常接入
@@ -279,10 +283,12 @@ vibegps ls
 - CLI 主链路
 - 项目初始化
 - Codex Stop hook 接入
+- Claude Code Stop hook 接入
 - branch-aware checkpoint / delta
 - 阈值触发 report
 - 手动 report
-- report analyzer：Codex 优先，heuristic 兜底
+- report analyzer：自动检测 Codex / Claude，heuristic 兜底
+- 高可视化 HTML 报告（AI 生成完整长卷网页，含 SVG 架构图）
 - 项目摘要 `ProjectDigest`
 - 全局项目索引
 - `doctor` / `ls` / `status` / `branches`
@@ -293,7 +299,6 @@ vibegps ls
 - 真正可用的 VS Code 前端面板
 - 日报 / 周报 / 任意 checkpoint 区间报告
 - 多窗口 / 多 agent 来源归因
-- Claude Code 正式适配
 - 更强的设计文档对齐与项目级知识图谱
 
 ## 常见问题
@@ -315,12 +320,14 @@ vibegps doctor
 vibegps diff --manual
 ```
 
-### 2. 报告为什么有时是 `heuristic`，有时是 `codex`？
+### 2. 报告为什么有时是 `heuristic`，有时是 `codex` / `claude`？
 
-当前策略是：
+当前策略是（默认 `analyzer: "auto"`）：
 
-- 优先尝试 `codex` 结构化分析
-- 如果 `codex` 不可用或输出不合法，则回退到 `heuristic`
+- 自动检测本机可用的 AI agent（优先 Codex，其次 Claude）
+- 使用可用的 agent 进行结构化分析和 HTML 报告生成
+- 如果 AI agent 不可用或输出不合法，则回退到 `heuristic`
+- 可在 `.vibegps/config.json` 中手动指定 `"codex"` / `"claude"` / `"heuristic"`
 
 ### 3. 为什么 branch 切换后会有新的追踪链？
 

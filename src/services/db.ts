@@ -140,7 +140,7 @@ export function insertBranchTrack(db: Database.Database, branchTrack: BranchTrac
   );
 }
 
-export function updateBranchTrackHead(db: Database.Database, branchTrackId: string, gitHead: string): void {
+export function updateBranchTrackHead(db: Database.Database, branchTrackId: string, gitHead: string | null): void {
   db.prepare("UPDATE branch_tracks SET git_head = ?, updated_at = ? WHERE branch_track_id = ?").run(gitHead, nowIso(), branchTrackId);
 }
 
@@ -257,4 +257,3 @@ export function insertReport(db: Database.Database, report: Report): void {
     report.path
   );
 }
-

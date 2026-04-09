@@ -10,12 +10,13 @@ import { buildDelta } from "./delta";
 import { touchGlobalProjectIndex } from "./global-index";
 import { generateProjectDigest } from "./project-digest";
 import { generateReport, resolveReportWindow, shouldTriggerReport } from "./report";
-import { createSnapshot, createSnapshotFromGitHead } from "./snapshot";
+import { createEmptySnapshot, createSnapshot, createSnapshotFromGitHead } from "./snapshot";
 
 export interface DiffOptions {
   workspaceRoot: string;
   hookSource?: string;
   hookPayloadFile?: string;
+  hookTurnId?: string;
   manual?: boolean;
 }
 
@@ -50,11 +51,13 @@ export function runDiff(options: DiffOptions): DiffResult {
     baseline = createCheckpoint(db, {
       workspaceId: workspace.workspaceId,
       branchTrack,
-      snapshot: createSnapshotFromGitHead(workspace.workspaceId, paths, gitState.gitHead),
+      snapshot: gitState.gitHead
+        ? createSnapshotFromGitHead(workspace.workspaceId, paths, gitState.gitHead)
+        : createEmptySnapshot(workspace.workspaceId),
       checkpointsDir: paths.checkpointsDir,
       kind: "branch_init",
       triggerRef: {
-        source: options.manual ? "manual" : "codex_notify"
+        source: options.manual ? "manual" : "codex_hook"
       }
     });
     createdBranchBaseline = true;
@@ -70,8 +73,8 @@ export function runDiff(options: DiffOptions): DiffResult {
     kind: "turn_end",
     parentCheckpointId: baseline.checkpointId,
     triggerRef: {
-      source: options.manual ? "manual" : "codex_notify",
-      turnId: options.hookPayloadFile
+      source: options.manual ? "manual" : "codex_hook",
+      turnId: options.hookTurnId
     }
   });
 
@@ -89,7 +92,7 @@ export function runDiff(options: DiffOptions): DiffResult {
     deltasDir: paths.deltasDir,
     deltaPatchesDir: paths.deltaPatchesDir,
     promptPreview,
-    codexTurnId: options.hookPayloadFile
+    codexTurnId: options.hookTurnId
   });
 
   insertDelta(db, delta, deltaPath);

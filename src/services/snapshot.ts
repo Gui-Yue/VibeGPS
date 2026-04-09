@@ -154,3 +154,13 @@ export function createSnapshotFromGitHead(
     entries
   };
 }
+
+export function createEmptySnapshot(workspaceId: string): Snapshot {
+  return {
+    snapshotId: createId("snap"),
+    workspaceId,
+    createdAt: nowIso(),
+    fileCount: 0,
+    entries: []
+  };
+}

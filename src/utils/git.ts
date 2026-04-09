@@ -16,11 +16,30 @@ function runGitBuffer(root: string, args: string[]): Buffer {
   });
 }
 
-export function getGitState(root: string): GitState {
-  const branchName = runGit(root, ["rev-parse", "--abbrev-ref", "HEAD"]);
-  const gitHead = runGit(root, ["rev-parse", "HEAD"]);
+function tryRunGit(root: string, args: string[]): string | null {
+  try {
+    return runGit(root, args);
+  } catch {
+    return null;
+  }
+}
 
-  if (branchName === "HEAD") {
+export function getGitState(root: string): GitState {
+  // Ensure we still fail fast when the current directory is not a git repository.
+  runGit(root, ["rev-parse", "--git-dir"]);
+
+  const branchName = tryRunGit(root, ["symbolic-ref", "--quiet", "--short", "HEAD"]);
+  const gitHead = tryRunGit(root, ["rev-parse", "--verify", "HEAD"]);
+
+  if (branchName) {
+    return {
+      gitBranch: branchName,
+      gitHead,
+      branchType: "named"
+    };
+  }
+
+  if (gitHead) {
     return {
       gitBranch: `detached:${gitHead.slice(0, 12)}`,
       gitHead,
@@ -28,11 +47,7 @@ export function getGitState(root: string): GitState {
     };
   }
 
-  return {
-    gitBranch: branchName,
-    gitHead,
-    branchType: "named"
-  };
+  throw new Error("Failed to resolve git branch or HEAD.");
 }
 
 export function listGitHeadFiles(root: string, gitRef: string): string[] {

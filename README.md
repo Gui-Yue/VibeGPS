@@ -1,4 +1,4 @@
-﻿# VibeGPS
+# VibeGPS
 
 VibeGPS 是一个面向 vibecoding 的 CLI 追踪器。
 
@@ -11,8 +11,9 @@ VibeGPS 是一个面向 vibecoding 的 CLI 追踪器。
 ## 当前 MVP 能做什么
 
 - 一次 `init` 接入当前项目
-- 接管 Codex turn-end hook
-- 按 Git branch 维护独立追踪链`r`n- 新 branch 首次 diff 自动建立 branch baseline
+- 接管 Codex Stop hook
+- 按 Git branch 维护独立追踪链
+- 新 branch 首次 diff 自动建立 branch baseline
 - 每轮生成 `checkpoint + delta`
 - 达到阈值时自动生成 report
 - 手动生成 report
@@ -66,7 +67,7 @@ codex
 2. 写入项目级配置 `.vibegps/config.json`
 3. 生成初始 checkpoint
 4. 给当前 Git branch 创建 `BranchTrack`
-5. 接入 `.codex/config.toml` 的 turn-end notify
+5. 接入 `.codex/config.toml` + `.codex/hooks.json` 的 Codex Stop hook
 6. 生成一个基础 `ProjectDigest`
 7. 把当前项目写入全局索引 `~/.vibegps/projects.json`
 
@@ -84,7 +85,7 @@ codex
 
 ### `vibegps init`
 
-初始化当前项目，并接入 Codex hook。
+初始化当前项目，并接入 Codex Stop hook。
 
 ```bash
 vibegps init
@@ -166,8 +167,8 @@ vibegps doctor
 - `.vibegps/` 是否存在
 - `.vibegps/config.json` 是否可解析
 - `.vibegps/state.db` 是否可读
-- hook shim 是否存在
-- `.codex/config.toml` 是否存在受管 notify 配置
+- `.codex/config.toml` 是否启用 `codex_hooks`
+- `.codex/config.toml` / `.codex/hooks.json` 是否存在受管 Stop hook 配置
 - `ProjectDigest` 是否可用
 
 ## 目录结构
@@ -181,7 +182,6 @@ vibegps doctor
   checkpoints/
   deltas/
   reports/
-  hooks/
   cache/
   logs/
   tmp/
@@ -192,7 +192,7 @@ vibegps doctor
 - `checkpoints/`：每个阶段节点的快照信息
 - `deltas/`：每一轮变更记录与 patch
 - `reports/`：HTML / Markdown / JSON 报告
-- `hooks/`：Codex hook shim
+- `tmp/`：Stop hook payload 与回写结果等临时产物
 - `cache/project-digest.json`：项目整体摘要
 
 用户主目录还会维护：
@@ -278,7 +278,7 @@ vibegps ls
 
 - CLI 主链路
 - 项目初始化
-- Codex turn-end hook 接入
+- Codex Stop hook 接入
 - branch-aware checkpoint / delta
 - 阈值触发 report
 - 手动 report
@@ -353,4 +353,3 @@ npm test
 ## 许可证
 
 MIT
-

@@ -40,7 +40,7 @@ export interface VibegpsConfig {
 
 export interface GitState {
   gitBranch: string;
-  gitHead: string;
+  gitHead: string | null;
   branchType: GitBranchType;
 }
 
@@ -82,7 +82,7 @@ export interface Checkpoint {
   kind: CheckpointKind;
   parentCheckpointId?: string;
   triggerRef?: {
-    source: "codex_notify" | "manual" | "scheduled" | "init";
+    source: "codex_hook" | "codex_notify" | "manual" | "scheduled" | "init";
     turnId?: string;
   };
   snapshotRef: string;
@@ -175,13 +175,6 @@ export interface ReportAnalysis {
   nextQuestions: string[];
   confidence: AnalysisConfidence;
   analyzerRuntime: "codex" | "heuristic";
-}
-
-export interface HookRuntimeMetadata {
-  nodeExecutable: string;
-  cliEntrypoint: string;
-  workspacePath: string;
-  forwardedNotify?: string[];
 }
 
 export interface ProjectDigestModule {

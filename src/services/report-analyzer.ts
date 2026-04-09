@@ -416,6 +416,8 @@ function runCodexAnalyzer(context: AnalyzerContext): ReportAnalysis | null {
         "exec",
         "--ephemeral",
         "--skip-git-repo-check",
+        "-c",
+        "features.codex_hooks=false",
         "-C",
         context.workspaceRoot,
         "-s",

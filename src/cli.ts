@@ -2,6 +2,7 @@
 import { registerBranchesCommand } from "./commands/branches";
 import { registerDoctorCommand } from "./commands/doctor";
 import { registerDiffCommand } from "./commands/diff";
+import { registerHookStopCommand } from "./commands/hook-stop";
 import { registerInitCommand } from "./commands/init";
 import { registerLsCommand } from "./commands/ls";
 import { registerReportCommand } from "./commands/report";
@@ -13,6 +14,7 @@ export function buildCli(): Command {
 
   registerInitCommand(program);
   registerDiffCommand(program);
+  registerHookStopCommand(program);
   registerStatusCommand(program);
   registerBranchesCommand(program);
   registerReportCommand(program);

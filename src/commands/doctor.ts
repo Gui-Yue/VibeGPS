@@ -1,12 +1,20 @@
-﻿import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { join } from "node:path";
+import { join, normalize } from "node:path";
 import { Command } from "commander";
 import { DEFAULT_CONFIG, normalizeConfig, type VibegpsConfig } from "../shared";
 import { getWorkspaceRecordByRoot, getBranchTrack, getLatestCheckpoint, getLatestReport, openDatabase } from "../services/db";
 import { getGlobalIndexRoot } from "../services/global-index";
+import {
+  extractHooksConfigPath,
+  extractStopHookCommands,
+  getExpectedHooksConfigPath,
+  getExpectedStopHookCommand,
+  isCodexHooksEnabled,
+  resolveHooksConfigPath,
+  validateManagedStopHookCommand
+} from "../utils/codex-hooks";
 import { readJson } from "../utils/json";
-import { extractNotifyCommand } from "../utils/notify";
 import { getGitState } from "../utils/git";
 import { getWorkspacePaths } from "../utils/workspace";
 
@@ -103,27 +111,42 @@ export function registerDoctorCommand(program: Command): void {
         hasFailure = true;
       }
 
-      const shimPath = join(paths.hooksDir, "codex-turn-end.js");
-      if (existsSync(shimPath)) {
-        ok("hook shim", `found ${shimPath}`);
-      } else {
-        fail("hook shim", "managed Codex hook shim is missing");
-        hasFailure = true;
-      }
-
       const codexConfigPath = join(paths.codexDir, "config.toml");
       if (existsSync(codexConfigPath)) {
         const configText = readFileSync(codexConfigPath, "utf8");
-        const notify = extractNotifyCommand(configText);
         const managed = configText.includes("# vibegps:start") && configText.includes("# vibegps:end");
+        const configuredHooksPath = extractHooksConfigPath(configText);
+        const expectedHooksPath = getExpectedHooksConfigPath(paths);
 
-        if (managed) {
-          ok("codex hook", notify ? `notify is configured: ${notify.join(" ")}` : "managed block exists");
+        if (managed && isCodexHooksEnabled(configText) && configuredHooksPath) {
+          const resolvedHooksPath = resolveHooksConfigPath(root, configuredHooksPath);
+          if (!existsSync(resolvedHooksPath)) {
+            fail("codex hook", `hooks config points to a missing file: ${configuredHooksPath}`);
+            hasFailure = true;
+          } else if (normalize(resolvedHooksPath) !== expectedHooksPath) {
+            warn("codex hook", `hooks config resolves to ${resolvedHooksPath}; expected ${expectedHooksPath}.`);
+          } else {
+            try {
+              const hooksConfig = readJson<unknown>(resolvedHooksPath);
+              const stopCommands = extractStopHookCommands(hooksConfig);
+              const expectedCommand = getExpectedStopHookCommand();
+              const managedCommand = stopCommands.find((command) => validateManagedStopHookCommand(command));
+
+              if (!managedCommand) {
+                warn("codex hook", `Stop hook is enabled, but no managed VibeGPS command matches \`${expectedCommand}\`.`);
+              } else {
+                ok("codex hook", `Stop hook is configured via ${configuredHooksPath} -> ${managedCommand}`);
+              }
+            } catch {
+              fail("codex hook", "failed to parse .codex/hooks.json");
+              hasFailure = true;
+            }
+          }
         } else {
-          warn("codex hook", "managed VibeGPS notify block was not found in .codex/config.toml");
+          warn("codex hook", "managed Stop hook config was not found or codex_hooks is not enabled");
         }
       } else {
-        warn("codex hook", ".codex/config.toml is missing; run `vibegps init` to install the hook");
+        warn("codex hook", ".codex/config.toml is missing; run `vibegps init` to install the Stop hook");
       }
 
       if (existsSync(paths.projectDigestFile)) {
